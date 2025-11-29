@@ -1,35 +1,510 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trò chơi Wordwall</title>
-
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hộp Quà Bí Ẩn — Drag & Drop Game</title>
+<style>
+  :root{
+    --bg:#fffaf6;
+    --card:#ffffff;
+    --accent:#ff9bb3;
+    --accent2:#7ad7c6;
+    --muted:#7c7c7c;
+    --shadow: 0 8px 24px rgba(33,33,33,0.08);
+    --nice: 'Segoe UI', Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box;font-family:var(--nice)}
+  body{
+    margin:0;background:linear-gradient(180deg,#f7f1ff 0%,var(--bg) 60%);min-height:100vh;
+    display:flex;align-items:flex-start;justify-content:center;padding:24px;
+  }
+  .wrap{width:100%;max-width:1100px}
+  header{display:flex;gap:16px;align-items:center;margin-bottom:18px}
+  .logo{background:var(--accent);color:white;padding:10px 14px;border-radius:12px;font-weight:700;box-shadow:var(--shadow)}
+  h1{font-size:20px;margin:0;color:#222}
+  .subtitle{color:var(--muted);font-size:13px}
+  .card{
+    background:var(--card);border-radius:14px;padding:18px;box-shadow:var(--shadow);
+  }
+  .top-row{display:flex;gap:18px;align-items:center;margin-bottom:12px}
+  .player-input{display:flex;gap:8px;align-items:center}
+  input[name="player"]{padding:8px 10px;border-radius:8px;border:1px solid #eee;width:220px}
+  button.primary{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #eee;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .main{display:grid;grid-template-columns:1fr 340px;gap:18px;margin-top:8px}
+  .game-area{min-height:520px;padding:16px;border-radius:12px}
+  .panel{background:linear-gradient(180deg,#fff,#fff);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+  .level-box{margin-bottom:14px}
+  .question{font-weight:700;margin-bottom:8px}
+  .dropzones{display:flex;gap:12px;flex-wrap:wrap}
+  .zone{flex:1;min-width:140px;background:#fbfbff;border-radius:10px;padding:10px;min-height:120px;border:2px dashed #eee;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:flex-start}
+  .zone h3{margin:0;font-size:14px;color:var(--muted)}
+  .draggables{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .card-item{
+    background:linear-gradient(180deg,#fff,#fff);padding:10px 12px;border-radius:10px;border:1px solid #f0f0f3;
+    box-shadow:0 6px 16px rgba(10,10,10,0.04);cursor:grab;
+  }
+  .card-item.dragging{opacity:0.5}
+  .footer-right{display:flex;flex-direction:column;gap:10px}
+  .status{font-size:14px;color:#444}
+  .timer{font-size:18px;font-weight:700;color:#222}
+  .nore-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .nore{background:linear-gradient(90deg,var(--accent),#ffccde);padding:6px 10px;border-radius:20px;color:white;font-weight:700;box-shadow:0 6px 14px rgba(250,130,160,0.12)}
+  .leader{margin-top:12px}
+  .leader h4{margin:0 0 8px 0}
+  ol{margin:0;padding-left:18px}
+  .start-screen{display:flex;gap:16px;align-items:center}
+  .big-btn{background:var(--accent2);color:#fff;padding:12px 18px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+  .hidden{display:none}
+  .success-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);}
+  .popup{background:white;padding:22px;border-radius:12px;max-width:520px;width:92%;text-align:center}
+  .treasure{font-size:22px;font-weight:800;color:#2b2b2b;margin-bottom:6px}
+  .small{color:var(--muted);margin-bottom:12px}
+  .gift{width:120px;height:120px;border-radius:18px;background:linear-gradient(180deg,#fff8f9,#fff0f6);display:flex;align-items:center;justify-content:center;margin:12px auto;font-size:36px}
+  footer.note{margin-top:16px;color:var(--muted);font-size:13px}
+  /* responsive */
+  @media (max-width:900px){
+    .main{grid-template-columns:1fr}
+    .panel{margin-bottom:12px}
+  }
+</style>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <div class="logo">🎁</div>
+      <div>
+        <h1>Hộp Quà Bí Ẩn — Trò chơi Kéo & Thả</h1>
+        <div class="subtitle">Hoàn thành từng thử thách để ghép mật mã mở kho báu!</div>
+      </div>
+    </header>
 
-  <iframe 
-      src="https://wordwall.net/embed/b1dfb65ea4754b62808f68343d6efb61?themeId=50&templateId=2&fontStackId=0"
-      allowfullscreen>
-  </iframe>
+    <div class="card">
+      <div class="top-row">
+        <div class="player-input">
+          <label for="player"><strong>Tên học sinh:</strong></label>
+          <input id="player" name="player" placeholder="Nhập tên (ví dụ: An)" />
+          <button id="btnStart" class="primary">Bắt đầu</button>
+        </div>
 
+        <div style="flex:1"></div>
+
+        <div class="footer-right">
+          <div class="status">Level: <span id="levelLabel">0</span> / 3</div>
+          <div class="timer">Thời gian: <span id="time">00:00</span></div>
+          <div class="nore-row" id="noremRow"></div>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="game-area panel" id="gameArea">
+          <!-- Level contents injected here -->
+          <div id="levelContent" class="level-box">
+            <div class="start-screen">
+              <div>
+                <h2>Chào mừng tới Hộp Quà Bí Ẩn 🎀</h2>
+                <p class="small">Bạn sẽ chơi 3 thử thách. Mỗi khi hoàn thành, bạn nhận 1 mảnh nơ. Ghép đủ mảnh sẽ mở kho báu!</p>
+                <button id="beginBtn" class="big-btn">Nhấn để bắt đầu</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside style="min-width:260px">
+          <div class="panel leader">
+            <h4>Bảng xếp hạng (local)</h4>
+            <ol id="leaderboard"></ol>
+            <div style="margin-top:10px">
+              <button id="resetBoard" class="ghost">Xóa bảng xếp hạng</button>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:12px">
+            <h4>Hướng dẫn ngắn</h4>
+            <ul style="margin:8px 0 0 18px;color:var(--muted)">
+              <li>Kéo thẻ vào vùng đúng.</li>
+              <li>Hoàn thành nhanh để được điểm tốt.</li>
+              <li>Ghép đủ 3 mảnh nơ để mở Hộp Quà.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="note">Ghi chú: Dữ liệu bảng xếp hạng lưu trên trình duyệt (localStorage).</footer>
+    </div>
+  </div>
+
+  <!-- success overlay -->
+  <div id="overlay" class="hidden success-overlay">
+    <div class="popup">
+      <div class="treasure">🎉 Chúc mừng!</div>
+      <div class="small">Bạn đã ghép đủ mảnh nơ và mở Hộp Quà Bí Ẩn.</div>
+      <div class="gift">🎀</div>
+      <div style="margin-top:8px">
+        <button id="closeOverlay" class="primary">Hoàn thành</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* GAME DATA: 3 LEVELS - you can edit items/questions here */
+const LEVELS = [
+  {
+    id:1,
+    type:'group-sort',
+    title:'Phân loại: Số hoặc Chữ',
+    desc:'Kéo số vào "SỐ", chữ vào "CHỮ".',
+    zones: ['SỐ', 'CHỮ'],
+    items: ['5','B','12','A','3','C'],
+    fragment: 'SẮP'
+  },
+  {
+    id:2,
+    type:'order',
+    title:'Sắp xếp: Thứ tự tăng dần',
+    desc:'Kéo các số vào vùng theo thứ tự tăng dần (nhỏ → lớn).',
+    zones: ['THỨ TỰ'],
+    items: ['8','2','14','6','1'], // we'll require order
+    fragment: 'XẾP'
+  },
+  {
+    id:3,
+    type:'match',
+    title:'Ghép đôi: Đồ vật với nơi cất',
+    desc:'Kéo đồ vật vào vị trí đúng.',
+    zones: ['Tủ áo','Giá bát','Tủ lạnh'],
+    items: [
+      {label:'Áo', target:'Tủ áo'},
+      {label:'Đĩa', target:'Giá bát'},
+      {label:'Sữa', target:'Tủ lạnh'}
+    ],
+    fragment: 'ĐỂ'
+  }
+]; // final password: combine fragments + 'DỄ TÌM' added at the end in popup
+
+/* STATE */
+let playerName = '';
+let currentLevel = 0;
+let timerInterval = null;
+let levelStartTime = 0;
+let times = []; // per level seconds
+let fragments = [];
+
+/* DOM */
+const $player = document.getElementById('player');
+const $btnStart = document.getElementById('btnStart');
+const $begin = document.getElementById('beginBtn');
+const $levelLabel = document.getElementById('levelLabel');
+const $time = document.getElementById('time');
+const $levelContent = document.getElementById('levelContent');
+const $noremRow = document.getElementById('noremRow');
+const $overlay = document.getElementById('overlay');
+const $closeOverlay = document.getElementById('closeOverlay');
+const $leader = document.getElementById('leaderboard');
+const $resetBoard = document.getElementById('resetBoard');
+
+/* Utility */
+function formatTime(s){
+  const mm = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+function startTimer(){
+  levelStartTime = Date.now();
+  $time.textContent = '00:00';
+  timerInterval = setInterval(()=>{
+    const sec = Math.floor((Date.now()-levelStartTime)/1000);
+    $time.textContent = formatTime(sec);
+  },500);
+}
+function stopTimer(){
+  clearInterval(timerInterval);
+  const sec = Math.floor((Date.now()-levelStartTime)/1000);
+  return sec;
+}
+function saveScore(totalSeconds){
+  const key = 'hq_scores_v1';
+  const arr = JSON.parse(localStorage.getItem(key)||'[]');
+  arr.push({name:playerName||'Không tên', time: totalSeconds, date: Date.now()});
+  arr.sort((a,b)=>a.time-b.time);
+  localStorage.setItem(key, JSON.stringify(arr.slice(0,50)));
+  renderLeaderboard();
+}
+function renderLeaderboard(){
+  const key='hq_scores_v1';
+  const arr = JSON.parse(localStorage.getItem(key)||'[]');
+  $leader.innerHTML = '';
+  arr.slice(0,5).forEach(a=>{
+    const li = document.createElement('li');
+    li.textContent = `${a.name} — ${formatTime(a.time)}`;
+    $leader.appendChild(li);
+  });
+}
+
+/* Drag & Drop helpers */
+function enableDrag(el){
+  el.setAttribute('draggable','true');
+  el.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/plain', el.dataset.id);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', e=>{
+    el.classList.remove('dragging');
+  });
+}
+function makeDropzone(zoneEl, acceptFn){
+  zoneEl.addEventListener('dragover', e=>{ e.preventDefault(); zoneEl.style.borderColor='#b7e4d0'; });
+  zoneEl.addEventListener('dragleave', e=>{ zoneEl.style.borderColor='#eee'; });
+  zoneEl.addEventListener('drop', e=>{
+    e.preventDefault();
+    zoneEl.style.borderColor='#eee';
+    const id = e.dataTransfer.getData('text/plain');
+    const dragged = document.querySelector(`[data-id="${id}"]`);
+    if(!dragged) return;
+    // call acceptFn to validate
+    const ok = acceptFn(dragged, zoneEl);
+    if(ok){
+      zoneEl.appendChild(dragged);
+      dragged.classList.add('placed');
+      checkLevelComplete();
+    } else {
+      // animate wrong
+      dragged.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:300});
+    }
+  });
+}
+
+/* Level renderers */
+function renderLevel(levelIndex){
+  const level = LEVELS[levelIndex];
+  $levelContent.innerHTML = '';
+  $levelLabel.textContent = `${levelIndex+1}`;
+  // header
+  const h = document.createElement('div');
+  h.innerHTML = `<div class="question">${level.title}</div><div class="small">${level.desc}</div>`;
+  $levelContent.appendChild(h);
+
+  // dropzones container
+  const dz = document.createElement('div');
+  dz.className = 'dropzones';
+  // for each zone create element
+  level.zones.forEach(zName=>{
+    const z = document.createElement('div');
+    z.className = 'zone';
+    z.innerHTML = `<h3>${zName}</h3>`;
+    dz.appendChild(z);
+  });
+  $levelContent.appendChild(dz);
+
+  // draggables area
+  const dragWrap = document.createElement('div');
+  dragWrap.className = 'draggables';
+
+  // items: for different types normalize to objects
+  let items = level.items.map((it,i)=>{
+    if(typeof it === 'string') return {id:`i${i}`, label:it, raw:it};
+    return {id:`i${i}`, label:it.label, target:it.target, raw:it};
+  });
+
+  // shuffle for fairness
+  items = items.sort(()=>Math.random()-0.5);
+
+  items.forEach(it=>{
+    const el = document.createElement('div');
+    el.className = 'card-item';
+    el.textContent = it.label;
+    el.dataset.id = it.id;
+    el.dataset.raw = JSON.stringify(it.raw);
+    dragWrap.appendChild(el);
+    enableDrag(el);
+  });
+
+  $levelContent.appendChild(dragWrap);
+
+  /* set rules per type */
+  if(level.type === 'group-sort'){
+    const zonesEls = Array.from(dz.children);
+    // zone 0 SỐ, zone1 CHỮ
+    zonesEls.forEach((zEl, idx)=>{
+      makeDropzone(zEl, (dragged)=>{
+        const raw = JSON.parse(dragged.dataset.raw);
+        const isNumber = /^[0-9]+$/.test(raw);
+        return (idx===0 && isNumber) || (idx===1 && !isNumber)
+      });
+    });
+  } else if(level.type === 'order'){
+    // single zone where items must be placed in order
+    const zEl = dz.children[0];
+    makeDropzone(zEl, (dragged)=>{
+      // append allowed always, but we'll validate final order
+      return true;
+    });
+  } else if(level.type === 'match'){
+    // each zone has title equal to target
+    const zonesEls = Array.from(dz.children);
+    zonesEls.forEach(zEl=>{
+      const targetName = zEl.querySelector('h3').textContent;
+      makeDropzone(zEl, (dragged)=>{
+        const raw = JSON.parse(dragged.dataset.raw);
+        // raw may be object with target
+        return raw.target === targetName;
+      });
+    });
+  }
+
+  // start timer
+  startTimer();
+}
+
+/* Check complete */
+function checkLevelComplete(){
+  const level = LEVELS[currentLevel];
+  const dzEls = Array.from(document.querySelectorAll('.zone'));
+  if(level.type === 'group-sort'){
+    // check each dropzone contains correct count (all items moved)
+    const totalPlaced = dzEls.reduce((s,z)=>s + z.querySelectorAll('.card-item').length,0);
+    if(totalPlaced === level.items.length){
+      // all placed, verify correctness: zones already validated on drop, so accept
+      completeLevel();
+    }
+  } else if(level.type === 'order'){
+    const container = dzEls[0];
+    const children = Array.from(container.querySelectorAll('.card-item'));
+    if(children.length === level.items.length){
+      // verify order numeric ascending
+      const arr = children.map(c=>parseInt(c.textContent.trim(),10));
+      let ok = true;
+      for(let i=1;i<arr.length;i++){
+        if(arr[i] < arr[i-1]) { ok=false; break;}
+      }
+      if(ok) completeLevel();
+      else {
+        // feedback
+        children.forEach(c=>c.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:350}));
+      }
+    }
+  } else if(level.type === 'match'){
+    // if every zone has one correct child -> complete
+    const correct = dzEls.every(z=>{
+      const ch = z.querySelector('.card-item');
+      if(!ch) return false;
+      const raw = JSON.parse(ch.dataset.raw);
+      return raw.target === z.querySelector('h3').textContent;
+    });
+    if(correct) completeLevel();
+  }
+}
+
+/* complete level handler */
+function completeLevel(){
+  const sec = stopTimer();
+  times.push(sec);
+  const frag = LEVELS[currentLevel].fragment;
+  fragments.push(frag);
+  // show small toast
+  showToast(`Hoàn thành Level ${currentLevel+1} — nhận mảnh nơ: ${frag}`);
+  renderFragments();
+  // advance or finish
+  if(currentLevel+1 < LEVELS.length){
+    currentLevel++;
+    setTimeout(()=> renderLevel(currentLevel),700);
+  } else {
+    // finished all
+    setTimeout(()=> finishGame(),700);
+  }
+}
+
+/* show fragments */
+function renderFragments(){
+  $noremRow.innerHTML = '';
+  fragments.forEach(f=>{
+    const el = document.createElement('div');
+    el.className = 'nore';
+    el.textContent = f;
+    $noremRow.appendChild(el);
+  });
+}
+
+/* toast */
+function showToast(msg){
+  const atk = document.createElement('div');
+  atk.textContent = msg;
+  atk.style.position='fixed';
+  atk.style.bottom='22px';
+  atk.style.left='50%';
+  atk.style.transform='translateX(-50%)';
+  atk.style.background='#222'; atk.style.color='#fff';
+  atk.style.padding='10px 16px'; atk.style.borderRadius='10px'; atk.style.zIndex=9999;
+  document.body.appendChild(atk);
+  setTimeout(()=>{ atk.style.transition='all 300ms'; atk.style.opacity='0'; atk.style.transform='translateX(-50%) translateY(6px)'; },1600);
+  setTimeout(()=> atk.remove(),2000);
+}
+
+/* finish game */
+function finishGame(){
+  const total = times.reduce((a,b)=>a+b,0);
+  // add last "DỄ TÌM"
+  fragments.push('DỄ TÌM');
+  renderFragments();
+  // save leaderboard
+  saveScore(total);
+  // show overlay with final password
+  document.querySelector('#overlay .treasure').textContent = '🎉 Bạn mở được Hộp Quà!';
+  document.querySelector('#overlay .small').textContent = `Mật mã: ${fragments.join(' - ')}`;
+  $overlay.classList.remove('hidden');
+}
+
+/* reset */
+$closeOverlay.addEventListener('click', ()=>{
+  $overlay.classList.add('hidden');
+  resetToStart();
+});
+
+function resetToStart(){
+  currentLevel = 0;
+  times = [];
+  fragments = [];
+  $noremRow.innerHTML = '';
+  $levelLabel.textContent = '0';
+  $time.textContent = '00:00';
+  $levelContent.innerHTML = `<div class="start-screen">
+    <div>
+      <h2>Chào mừng tới Hộp Quà Bí Ẩn 🎀</h2>
+      <p class="small">Bạn sẽ chơi 3 thử thách. Mỗi khi hoàn thành, bạn nhận 1 mảnh nơ. Ghép đủ mảnh sẽ mở kho báu!</p>
+      <button id="beginBtn2" class="big-btn">Nhấn để bắt đầu</button>
+    </div>
+  </div>`;
+  document.getElementById('beginBtn2').addEventListener('click', ()=>{
+    if(!$player.value.trim()){ alert('Vui lòng nhập tên trước khi bắt đầu.'); return; }
+    playerName = $player.value.trim();
+    currentLevel = 0;
+    renderLevel(currentLevel);
+  });
+}
+
+/* start actions */
+$btnStart.addEventListener('click', ()=>{
+  if(!$player.value.trim()){ alert('Vui lòng nhập tên trước khi bắt đầu.'); return; }
+  playerName = $player.value.trim();
+  $begin.click();
+});
+$begin.addEventListener('click', ()=>{
+  if(!$player.value.trim()){ alert('Vui lòng nhập tên trước khi bắt đầu.'); return; }
+  playerName = $player.value.trim();
+  // start level 1
+  currentLevel = 0;
+  renderLevel(currentLevel);
+});
+
+$resetBoard.addEventListener('click', ()=>{
+  if(confirm('Xóa toàn bộ bảng xếp hạng (lưu local)?')) {
+    localStorage.removeItem('hq_scores_v1'); renderLeaderboard();
+  }
+});
+
+/* init */
+renderLeaderboard();
+</script>
 </body>
 </html>
